@@ -1,0 +1,25 @@
+server:
+  port: 8087
+spring:
+  flyway:
+    locations: classpath:/db/migration
+    schemas: warehouse
+
+
+  datasource:
+    #        url: jdbc:postgresql://tech-card-service_postgres_1:5432/erp
+    url: jdbc:postgresql://localhost:5432/erp
+    username: postgres
+    password: postgres
+#    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      minimum-idle: 0
+      initialization-fail-timeout: -1
+      schema: warehouse
+
+  jpa:
+#    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+    show-sql: true
+
