@@ -6,6 +6,7 @@ plugins {
     kotlin("jvm") version "1.8.22"
     kotlin("plugin.spring") version "1.8.22"
     kotlin("kapt") version "1.8.22"
+    id("io.swagger.core.v3.swagger-gradle-plugin") version "2.2.15"
 }
 
 group = "com.example"
@@ -35,11 +36,13 @@ buildscript {
         classpath("io.swagger.core.v3:swagger-gradle-plugin:2.2.15")
     }
 }
+apply(plugin = "io.swagger.core.v3.swagger-gradle-plugin")
 
 extra["springCloudVersion"] = "2022.0.4"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-web-services")
@@ -47,6 +50,7 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
