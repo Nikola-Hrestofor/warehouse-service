@@ -3,10 +3,8 @@ package com.example.warehouseservice.repository.entity
 import com.example.warehouseservice.dto.enums.UnitType
 import lombok.AllArgsConstructor
 import lombok.NoArgsConstructor
-import org.springframework.data.relational.core.mapping.Table
 import jakarta.persistence.*
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.time.LocalDate
 
 @Entity
