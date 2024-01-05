@@ -10,59 +10,65 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.logging.Logger
 
 @Service
 class WarehouseService(val warehouseRepository: WarehouseRepository,
                        val mapper: WarehouseMapper) {
 
-    fun addUnits(warehouseRequest: WarehouseRequest): Long? {
+    fun addUnits(warehouseRequest: WarehouseRequest): BigDecimal? {
         val dto = WarehouseDto(true,
-            warehouseRequest.amount,
-            warehouseRequest.cost,
-            warehouseRequest.type,
-            warehouseRequest.childId,
-            warehouseRequest.orderNumber,
-            LocalDate.now())
+                warehouseRequest.amount,
+                warehouseRequest.cost,
+                warehouseRequest.type,
+                warehouseRequest.childId,
+                warehouseRequest.orderNumber,
+                LocalDate.now())
+        logger.info("dto $dto")
+        logger.info("mapper.toEntity(dto) ${mapper.toEntity(dto)}")
 
-        val save = warehouseRepository.save(mapper.toEntity(dto))
-        return save.id
+        warehouseRepository.save(mapper.toEntity(dto))
+        return getWarehouse(warehouseRequest.type, warehouseRequest.childId).amount
     }
 
     fun seizeUnits(warehouseRequest: WarehouseRequest): BigDecimal? {
         val dto = WarehouseDto(false,
-            warehouseRequest.amount,
-            warehouseRequest.cost,
-            warehouseRequest.type,
-            warehouseRequest.childId,
-            warehouseRequest.orderNumber,
-            LocalDate.now())
+                warehouseRequest.amount,
+                warehouseRequest.cost,
+                warehouseRequest.type,
+                warehouseRequest.childId,
+                warehouseRequest.orderNumber,
+                LocalDate.now())
 
-        val save = warehouseRepository.save(mapper.toEntity(dto))
-        return BigDecimal.valueOf(3456L)
+        warehouseRepository.save(mapper.toEntity(dto))
+
+        return getWarehouse(warehouseRequest.type, warehouseRequest.childId).cost
     }
 
     fun getWarehouse(unitType: UnitType, childId: Long): WarehouseRequest {
         val entity = warehouseRepository.getByTypeAndChildId(unitType, childId)
-
+        logger.info("entity $entity")
         val dtos = entity.map { warehouseEntity -> mapper.toModel(warehouseEntity) }
+        logger.info("dtos $dtos")
 
         val amount = dtos.stream()
-            .map(WarehouseDto::amount)
-            .reduce { bigDecimal: BigDecimal?, bigDecimal2: BigDecimal? -> bigDecimal?.multiply(bigDecimal2) }
-            .orElse(BigDecimal.ZERO)
-
-        val warehouse = dtos.stream().findFirst()
-            .orElse(null)
-
+                .map { if (it.action) it.amount else it.amount?.multiply(BigDecimal.valueOf(-1)) }
+                .reduce { bigDecimal: BigDecimal?, bigDecimal2: BigDecimal? -> bigDecimal?.add(bigDecimal2) }
+                .orElse(BigDecimal.ZERO)
+//TODO compute cost
         return WarehouseRequest(amount,
-            BigDecimal.valueOf(55L),
-            warehouse.type,
-            warehouse.childId,
-            "")
+                BigDecimal.ZERO,
+                unitType,
+                childId,
+                "")
     }
 
-    fun getWarehouse(pageable: Pageable) : Page<WarehouseDto> {
+    fun getWarehouse(pageable: Pageable): Page<WarehouseDto> {
         return warehouseRepository.findAll(pageable)
-            .map { warehouseEntity -> mapper.toModel(warehouseEntity) }
+                .map { warehouseEntity -> mapper.toModel(warehouseEntity) }
+    }
+
+    companion object {
+        val logger = Logger.getLogger(WarehouseService::class.java.name)
     }
 }

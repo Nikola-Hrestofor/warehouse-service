@@ -19,7 +19,7 @@ class WarehouseController(val warehouseService: WarehouseService) {
     }
 
     @PostMapping("/add")
-    fun addNewUnit(@RequestBody warehouseRequest: WarehouseRequest): Long? {
+    fun addNewUnit(@RequestBody warehouseRequest: WarehouseRequest): BigDecimal? {
         logger.info("new unit $warehouseRequest")
         return warehouseService.addUnits(warehouseRequest)
     }
@@ -31,7 +31,7 @@ class WarehouseController(val warehouseService: WarehouseService) {
     }
 
     @GetMapping("/unit")
-    fun getWarehouse(unitType: UnitType, childId: Long) : WarehouseRequest{
+    fun getWarehouse(@RequestParam unitType: UnitType, @RequestParam childId: Long) : WarehouseRequest{
         return warehouseService.getWarehouse(unitType, childId)
     }
 
