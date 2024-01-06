@@ -2,6 +2,7 @@ package com.example.warehouseservice.controller
 
 import com.example.warehouseservice.dto.WarehouseDto
 import com.example.warehouseservice.dto.WarehouseRequest
+import com.example.warehouseservice.dto.WarehouseStock
 import com.example.warehouseservice.dto.enums.UnitType
 import com.example.warehouseservice.service.WarehouseService
 import org.springframework.data.domain.Page
@@ -38,5 +39,10 @@ class WarehouseController(val warehouseService: WarehouseService) {
     @GetMapping
     fun getWarehouse(pageable: Pageable) : Page<WarehouseDto> {
         return warehouseService.getWarehouse(pageable)
+    }
+
+    @GetMapping("/stock")
+    fun getWarehouse() : List<WarehouseStock>?{
+        return warehouseService.getWarehouse()
     }
 }

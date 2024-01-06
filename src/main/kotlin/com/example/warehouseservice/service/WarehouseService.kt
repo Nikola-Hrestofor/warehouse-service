@@ -2,28 +2,35 @@ package com.example.warehouseservice.service
 
 import com.example.warehouseservice.dto.WarehouseDto
 import com.example.warehouseservice.dto.WarehouseRequest
+import com.example.warehouseservice.dto.WarehouseStock
 import com.example.warehouseservice.dto.enums.UnitType
 import com.example.warehouseservice.repository.WarehouseRepository
 import com.example.warehouseservice.repository.entity.mapper.WarehouseMapper
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.logging.Logger
 
 @Service
-class WarehouseService(val warehouseRepository: WarehouseRepository,
-                       val mapper: WarehouseMapper) {
+class WarehouseService(
+    val warehouseRepository: WarehouseRepository,
+    val mapper: WarehouseMapper,
+    val jdbcTemplate: JdbcTemplate
+) {
 
     fun addUnits(warehouseRequest: WarehouseRequest): BigDecimal? {
-        val dto = WarehouseDto(true,
-                warehouseRequest.amount,
-                warehouseRequest.cost,
-                warehouseRequest.type,
-                warehouseRequest.childId,
-                warehouseRequest.orderNumber,
-                LocalDate.now())
+        val dto = WarehouseDto(
+            true,
+            warehouseRequest.amount,
+            warehouseRequest.cost,
+            warehouseRequest.type,
+            warehouseRequest.childId,
+            warehouseRequest.orderNumber,
+            LocalDate.now()
+        )
         logger.info("dto $dto")
         logger.info("mapper.toEntity(dto) ${mapper.toEntity(dto)}")
 
@@ -32,13 +39,15 @@ class WarehouseService(val warehouseRepository: WarehouseRepository,
     }
 
     fun seizeUnits(warehouseRequest: WarehouseRequest): BigDecimal? {
-        val dto = WarehouseDto(false,
-                warehouseRequest.amount,
-                warehouseRequest.cost,
-                warehouseRequest.type,
-                warehouseRequest.childId,
-                warehouseRequest.orderNumber,
-                LocalDate.now())
+        val dto = WarehouseDto(
+            false,
+            warehouseRequest.amount,
+            warehouseRequest.cost,
+            warehouseRequest.type,
+            warehouseRequest.childId,
+            warehouseRequest.orderNumber,
+            LocalDate.now()
+        )
 
         warehouseRepository.save(mapper.toEntity(dto))
 
@@ -52,20 +61,45 @@ class WarehouseService(val warehouseRepository: WarehouseRepository,
         logger.info("dtos $dtos")
 
         val amount = dtos.stream()
-                .map { if (it.action) it.amount else it.amount?.multiply(BigDecimal.valueOf(-1)) }
-                .reduce { bigDecimal: BigDecimal?, bigDecimal2: BigDecimal? -> bigDecimal?.add(bigDecimal2) }
-                .orElse(BigDecimal.ZERO)
+            .map { if (it.action) it.amount else it.amount?.multiply(BigDecimal.valueOf(-1)) }
+            .reduce { bigDecimal: BigDecimal?, bigDecimal2: BigDecimal? -> bigDecimal?.add(bigDecimal2) }
+            .orElse(BigDecimal.ZERO)
 //TODO compute cost
-        return WarehouseRequest(amount,
-                BigDecimal.ZERO,
-                unitType,
-                childId,
-                "")
+        return WarehouseRequest(
+            amount,
+            BigDecimal.ZERO,
+            unitType,
+            childId,
+            ""
+        )
     }
 
     fun getWarehouse(pageable: Pageable): Page<WarehouseDto> {
         return warehouseRepository.findAll(pageable)
-                .map { warehouseEntity -> mapper.toModel(warehouseEntity) }
+            .map { warehouseEntity -> mapper.toModel(warehouseEntity) }
+    }
+
+    fun getWarehouse(): List<WarehouseStock> {
+        //TODO add cost
+        val sql =
+            "select sum(case when action then amount else amount * (-1) end) as amount, " +
+                    "0 as cost, " +
+                    "child_id, " +
+                    "type " +
+                    "from warehouse " +
+                    "group by child_id, type "
+        val stock = jdbcTemplate.query(sql) { rs, _ ->
+            WarehouseStock(
+                rs.getBigDecimal("amount"),
+                rs.getBigDecimal("cost"),
+                rs.getString("type"),
+                rs.getLong("child_id"),
+            )
+        }
+
+        logger.info("stock $stock")
+
+        return stock
     }
 
     companion object {

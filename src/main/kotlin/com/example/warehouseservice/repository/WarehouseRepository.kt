@@ -9,4 +9,5 @@ interface WarehouseRepository : PagingAndSortingRepository<WarehouseEntity, Long
     JpaRepository<WarehouseEntity, Long> {
 
     fun getByTypeAndChildId(unitType: UnitType, childId: Long): List<WarehouseEntity>
+
 }
