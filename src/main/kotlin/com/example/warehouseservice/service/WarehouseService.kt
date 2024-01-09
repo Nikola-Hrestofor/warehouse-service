@@ -1,5 +1,6 @@
 package com.example.warehouseservice.service
 
+import com.example.warehouseservice.api.TechCardService
 import com.example.warehouseservice.dto.WarehouseDto
 import com.example.warehouseservice.dto.WarehouseRequest
 import com.example.warehouseservice.dto.WarehouseStock
@@ -18,7 +19,8 @@ import java.util.logging.Logger
 class WarehouseService(
     val warehouseRepository: WarehouseRepository,
     val mapper: WarehouseMapper,
-    val jdbcTemplate: JdbcTemplate
+    val jdbcTemplate: JdbcTemplate,
+    val techCardService: TechCardService,
 ) {
 
     fun addUnits(warehouseRequest: WarehouseRequest): BigDecimal? {
@@ -94,10 +96,15 @@ class WarehouseService(
                 rs.getBigDecimal("cost"),
                 rs.getString("type"),
                 rs.getLong("child_id"),
+                null
             )
         }
 
         logger.info("stock $stock")
+
+        stock.forEach { warehouseStock ->
+            warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
+        }
 
         return stock
     }
