@@ -31,7 +31,8 @@ class WarehouseService(
             warehouseRequest.type,
             warehouseRequest.childId,
             warehouseRequest.orderNumber,
-            LocalDate.now()
+            LocalDate.now(),
+            null
         )
         logger.info("dto $dto")
         logger.info("mapper.toEntity(dto) ${mapper.toEntity(dto)}")
@@ -48,7 +49,8 @@ class WarehouseService(
             warehouseRequest.type,
             warehouseRequest.childId,
             warehouseRequest.orderNumber,
-            LocalDate.now()
+            LocalDate.now(),
+            null
         )
 
         warehouseRepository.save(mapper.toEntity(dto))
@@ -77,8 +79,16 @@ class WarehouseService(
     }
 
     fun getWarehouse(pageable: Pageable): Page<WarehouseDto> {
-        return warehouseRepository.findAll(pageable)
+//        return
+        val warehouse = warehouseRepository.findAll(pageable)
             .map { warehouseEntity -> mapper.toModel(warehouseEntity) }
+
+        warehouse.forEach { warehouseDto ->
+            warehouseDto.componentDto = techCardService.getComponentById(warehouseDto.childId)
+        }
+
+        return warehouse
+
     }
 
     fun getWarehouse(): List<WarehouseStock> {
