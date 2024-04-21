@@ -113,7 +113,8 @@ class WarehouseService(
         logger.info("stock $stock")
 
         stock.forEach { warehouseStock ->
-            warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
+            if (warehouseStock.type != "CARD")
+                warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
         }
 
         return stock
