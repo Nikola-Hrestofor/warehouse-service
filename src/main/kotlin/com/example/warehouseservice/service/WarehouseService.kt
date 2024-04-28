@@ -84,9 +84,15 @@ class WarehouseService(
         val warehouse = warehouseRepository.findAll(pageable)
             .map { warehouseEntity -> mapper.toModel(warehouseEntity) }
 
-        warehouse.forEach { warehouseDto ->
-            warehouseDto.componentDto = techCardService.getComponentById(warehouseDto.childId)
-        }
+        warehouse
+            .forEach { warehouseDto ->
+                if (warehouseDto.type == UnitType.CARD) {
+                    val card = techCardService.getCardById(warehouseDto.childId)
+                    warehouseDto.componentDto = ComponentDto(null, card.name, null, null, card.code)
+                } else {
+                    warehouseDto.componentDto = techCardService.getComponentById(warehouseDto.childId)
+                }
+            }
 
         return warehouse
 
@@ -116,7 +122,8 @@ class WarehouseService(
         stock.forEach { warehouseStock ->
             if (warehouseStock.type == "CARD") {
                 val card = techCardService.getCardById(warehouseStock.childId)
-                warehouseStock.componentDto = ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
+                warehouseStock.componentDto =
+                    ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
             } else {
                 warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
             }
