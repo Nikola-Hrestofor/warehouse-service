@@ -1,6 +1,7 @@
 package com.example.warehouseservice.service
 
 import com.example.warehouseservice.api.TechCardService
+import com.example.warehouseservice.api.dto.ComponentDto
 import com.example.warehouseservice.dto.WarehouseDto
 import com.example.warehouseservice.dto.WarehouseRequest
 import com.example.warehouseservice.dto.WarehouseStock
@@ -113,8 +114,12 @@ class WarehouseService(
         logger.info("stock $stock")
 
         stock.forEach { warehouseStock ->
-            if (warehouseStock.type != "CARD")
+            if (warehouseStock.type == "CARD") {
+                val card = techCardService.getCardById(warehouseStock.childId)
+                warehouseStock.componentDto = ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
+            } else {
                 warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
+            }
         }
 
         return stock
