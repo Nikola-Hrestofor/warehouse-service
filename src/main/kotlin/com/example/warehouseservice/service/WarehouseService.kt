@@ -1,5 +1,6 @@
 package com.example.warehouseservice.service
 
+import com.example.warehouseservice.api.ManagementService
 import com.example.warehouseservice.api.TechCardService
 import com.example.warehouseservice.api.dto.ComponentDto
 import com.example.warehouseservice.dto.WarehouseDto
@@ -22,6 +23,7 @@ class WarehouseService(
     val mapper: WarehouseMapper,
     val jdbcTemplate: JdbcTemplate,
     val techCardService: TechCardService,
+    val managementService: ManagementService,
 ) {
 
     fun addUnits(warehouseRequest: WarehouseRequest): BigDecimal? {
@@ -80,25 +82,38 @@ class WarehouseService(
     }
 
     fun getWarehouse(pageable: Pageable): Page<WarehouseDto> {
-//        return
         val warehouse = warehouseRepository.findAll(pageable)
             .map { warehouseEntity -> mapper.toModel(warehouseEntity) }
 
         warehouse
             .forEach { warehouseDto ->
-                if (warehouseDto.type == UnitType.CARD) {
-                    val card = techCardService.getCardById(warehouseDto.childId)
-                    warehouseDto.componentDto = ComponentDto(null, card.name, null, null, card.code)
-                } else {
-                    warehouseDto.componentDto = techCardService.getComponentById(warehouseDto.childId)
+                when (warehouseDto.type) {
+                    UnitType.CARD -> {
+                        val card = techCardService.getCardById(warehouseDto.childId)
+                        warehouseDto.componentDto =
+                            ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
+                    }
+
+                    UnitType.COMPONENT -> {
+                        warehouseDto.componentDto = techCardService.getComponentById(warehouseDto.childId)
+                    }
+
+                    UnitType.PRODUCT -> {
+                        val product = managementService.getProductById(warehouseDto.childId)
+                        warehouseDto.componentDto = ComponentDto(
+                            name = product.name,
+                            code = product.uuid.toString(),
+                            id = null,
+                            unit = null,
+                            category = null
+                        )
+                    }
                 }
             }
-
         return warehouse
-
     }
 
-    fun getWarehouse(): List<WarehouseStock> {
+    fun getWarehouse(unitType: UnitType?): List<WarehouseStock> {
         //TODO add cost
         val sql =
             "select sum(case when action then amount else amount * (-1) end) as amount, " +
@@ -119,17 +134,36 @@ class WarehouseService(
 
         logger.info("stock $stock")
 
-        stock.forEach { warehouseStock ->
-            if (warehouseStock.type == "CARD") {
-                val card = techCardService.getCardById(warehouseStock.childId)
-                warehouseStock.componentDto =
-                    ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
-            } else if (warehouseStock.type == "COMPONENT") {
-                warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
+        val stockFiltered = stock.stream()
+            .filter { unitType == null || it.type == unitType.name }
+            .toList()
+
+        stockFiltered.forEach { warehouseStock ->
+            when (warehouseStock.type) {
+                "CARD" -> {
+                    val card = techCardService.getCardById(warehouseStock.childId)
+                    warehouseStock.componentDto =
+                        ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
+                }
+
+                "COMPONENT" -> {
+                    warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
+                }
+
+                "PRODUCT" -> {
+                    val product = managementService.getProductById(warehouseStock.childId)
+                    warehouseStock.componentDto = ComponentDto(
+                        name = product.name,
+                        code = product.uuid.toString(),
+                        id = null,
+                        unit = null,
+                        category = null
+                    )
+                }
             }
         }
 
-        return stock
+        return stockFiltered
     }
 
     companion object {

@@ -3,7 +3,9 @@ server:
 spring:
   services:
     tech-card:
-      host: localhost:8087
+      host: localhost:8081
+    management:
+      host: localhost:8086
   flyway:
     locations: classpath:/db/migration
     schemas: warehouse

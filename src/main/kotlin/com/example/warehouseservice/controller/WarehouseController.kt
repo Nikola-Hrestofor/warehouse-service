@@ -42,7 +42,7 @@ class WarehouseController(val warehouseService: WarehouseService) {
     }
 
     @GetMapping("/stock")
-    fun getWarehouse() : List<WarehouseStock>?{
-        return warehouseService.getWarehouse()
+    fun getWarehouse(@RequestParam(required = false) unitType: UnitType?) : List<WarehouseStock>?{
+        return warehouseService.getWarehouse(unitType)
     }
 }
