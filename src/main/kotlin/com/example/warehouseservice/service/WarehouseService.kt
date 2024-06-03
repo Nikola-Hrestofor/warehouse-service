@@ -124,7 +124,7 @@ class WarehouseService(
                 val card = techCardService.getCardById(warehouseStock.childId)
                 warehouseStock.componentDto =
                     ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
-            } else {
+            } else if (warehouseStock.type == "COMPONENT") {
                 warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
             }
         }
