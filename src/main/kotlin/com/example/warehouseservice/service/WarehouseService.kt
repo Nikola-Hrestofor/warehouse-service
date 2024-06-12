@@ -136,6 +136,7 @@ class WarehouseService(
 
         val stockFiltered = stock.stream()
             .filter { unitType == null || it.type == unitType.name }
+            .filter {it.amount.compareTo(BigDecimal.ZERO) == 1}
             .toList()
 
         stockFiltered.forEach { warehouseStock ->
