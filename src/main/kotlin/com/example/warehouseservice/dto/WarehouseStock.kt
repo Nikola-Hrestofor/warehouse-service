@@ -9,4 +9,12 @@ data class WarehouseStock(
     var type: String,
     var childId: Long,
     var componentDto: ComponentDto?,
-)
+) {
+    fun rank(): Int {
+        return when (type) {
+            "PRODUCT" -> 1
+            "CARD" -> 2
+            else -> 3
+        }
+    }
+}
