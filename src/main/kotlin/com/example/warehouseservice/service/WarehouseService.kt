@@ -126,7 +126,7 @@ class WarehouseService(
             WarehouseStock(
                 rs.getBigDecimal("amount"),
                 rs.getBigDecimal("cost"),
-                rs.getString("type"),
+                UnitType.valueOf(rs.getString("type")),
                 rs.getLong("child_id"),
                 null
             )
@@ -135,24 +135,24 @@ class WarehouseService(
         logger.info("stock $stock")
 
         val stockFiltered = stock.stream()
-            .filter { unitType == null || it.type == unitType.name }
+            .filter { unitType == null || it.type == unitType }
             .filter {it.amount.compareTo(BigDecimal.ZERO) == 1}
             .sorted { o1, o2 -> o1.rank().compareTo(o2.rank())}
             .toList()
 
         stockFiltered.forEach { warehouseStock ->
             when (warehouseStock.type) {
-                "CARD" -> {
+                UnitType.CARD -> {
                     val card = techCardService.getCardById(warehouseStock.childId)
                     warehouseStock.componentDto =
                         ComponentDto(name = card.name, code = card.code, id = null, unit = null, category = null)
                 }
 
-                "COMPONENT" -> {
+                UnitType.COMPONENT -> {
                     warehouseStock.componentDto = techCardService.getComponentById(warehouseStock.childId)
                 }
 
-                "PRODUCT" -> {
+                UnitType.PRODUCT -> {
                     val product = managementService.getProductById(warehouseStock.childId)
                     warehouseStock.componentDto = ComponentDto(
                         name = product.name,
